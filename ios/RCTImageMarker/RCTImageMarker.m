@@ -36,6 +36,24 @@ RCT_ENUM_CONVERTER(MarkerPosition,
                       }), BottomRight, integerValue)
 
 @end
+//
+typedef enum{
+    AlignLeft = 0,
+    AlignJustify = 1,
+    AlignRight = 2,
+} MarkerTextAlign;
+
+@implementation RCTConvert(MarkerTextAlign)
+
+RCT_ENUM_CONVERTER(MarkerTextAlign,
+                   (@{
+                      @"align-left" : @(AlignLeft),
+                      @"align-justify" : @(AlignJustify),
+                      @"align-right" : @(AlignRight),
+                      }), AlignJustify, integerValue)
+
+@end
+//
 
 @implementation ImageMarker
 
@@ -62,11 +80,11 @@ NSString * generateCacheFilePathForMarker(NSString * ext)
     NSString* name = [[NSUUID UUID] UUIDString];
     NSString* fullName = [NSString stringWithFormat:@"%@%@", name, ext];
     NSString* fullPath = [cacheDirectory stringByAppendingPathComponent:fullName];
-    
+
     return fullPath;
 }
 
-UIImage * markerImg(UIImage *image, NSString* text, CGFloat X, CGFloat Y, UIColor* color, UIFont* font, CGFloat scale, NSInteger alignment){
+UIImage * markerImg(UIImage *image, NSString* text, CGFloat X, CGFloat Y, UIColor* color, UIFont* font, CGFloat scale, MarkerTextAlign alignment){//, NSInteger alignment
     int w = image.size.width * scale;
     int h = image.size.height * scale;
 
@@ -78,13 +96,13 @@ UIImage * markerImg(UIImage *image, NSString* text, CGFloat X, CGFloat Y, UIColo
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
     /// Set text alignment
     switch (alignment) {
-        case 0:
+        case AlignLeft:
             paragraphStyle.alignment = NSTextAlignmentLeft;
             break;
-        case 1:
+        case AlignJustify:
             paragraphStyle.alignment = NSTextAlignmentCenter;
             break;
-        case 2:
+        case AlignRight:
             paragraphStyle.alignment = NSTextAlignmentRight;
             break;
         default:
@@ -210,7 +228,7 @@ UIImage * markerImgByPostion(UIImage *image, NSString* text, MarkerPosition posi
 
     CGSize size = [text sizeWithAttributes:attr];
 
-//    CGSize size = CGSizeMake(fontSize, height);
+    //    CGSize size = CGSizeMake(fontSize, height);
     UIGraphicsBeginImageContext(image.size);
     [image drawInRect:CGRectMake(0, 0, w, h)];
     CGRect rect;
@@ -318,7 +336,7 @@ RCT_EXPORT_METHOD(addText: (NSString *)path
                   fontSize:(CGFloat)fontSize
                   scale:(CGFloat)scale
                   quality:(NSInteger) quality
-                  alignment:(NSInteger) alignment
+                  alignment:(MarkerTextAlign)alignment
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -493,3 +511,4 @@ RCT_EXPORT_METHOD(markWithImageByPosition: (NSString *)path
 
 
 @end
+
