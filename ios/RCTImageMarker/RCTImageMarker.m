@@ -116,7 +116,7 @@ UIImage * markerImg(UIImage *image, NSString* text, CGFloat X, CGFloat Y, UIColo
                            NSFontAttributeName: font,   //设置字体
                            NSForegroundColorAttributeName : color      //设置字体颜色
                            };
-    CGRect position = CGRectMake(X, Y, w, h);
+    CGRect position = CGRectMake(X, Y, w-30, h-30);//字离图片的间距
     [text drawInRect:position withAttributes:attr];
     UIImage *aimg = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
