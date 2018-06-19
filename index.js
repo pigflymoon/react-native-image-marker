@@ -36,7 +36,9 @@ type TextMarkOption = {
     scale: number,
     // image quality
     quality: number,
-    position?: Position
+    position?: Position,
+    alignment?:number,
+
 }
 
 type ImageMarkOption = {
