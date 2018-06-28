@@ -72,6 +72,47 @@ void saveImageForMarker(NSString * fullPath, UIImage * image, float quality)
     NSFileManager* fileManager = [NSFileManager defaultManager];
     [fileManager createFileAtPath:fullPath contents:data attributes:nil];
 }
+//
+//图片压
+UIImage * imageCompression(UIImage * image)
+{
+//    UIImage *image = [UIImage imageNamed:@"HD"];
+    //第一个参数是图片对象，第二个参数是压的系数，其值范围为0~1。
+    NSData * imageData = UIImageJPEGRepresentation(image, 1);
+    UIImage * newImage = [UIImage imageWithData:imageData];
+    return newImage;
+}
+//
+UIImage * imageByScalingAndCroppingForSize(CGSize targetSize,UIImage *sourceImage)
+{
+    UIImage *newImage = nil;
+    CGSize imageSize = sourceImage.size;
+    CGFloat width = imageSize.width;
+    CGFloat height = imageSize.height;
+    CGFloat targetWidth = targetSize.width * 2;
+    CGFloat targetHeight = targetSize.height;
+    CGFloat scaleFactor = 0.0;
+    CGFloat scaledWidth = width;//targetWidth;
+    CGFloat scaledHeight = height;//targetHeight * 2;
+    CGPoint thumbnailPoint = CGPointMake(0.0,0.0);
+//    UIGraphicsBeginImageContext(targetSize); // this will crop
+    UIGraphicsBeginImageContext(CGSizeMake(targetWidth, targetHeight));//final image size
+    CGRect thumbnailRect = CGRectZero;
+    thumbnailRect.origin = thumbnailPoint;
+    thumbnailRect.size.width= scaledWidth;
+    thumbnailRect.size.height = scaledHeight;
+
+    [sourceImage drawInRect:thumbnailRect];
+    newImage = UIGraphicsGetImageFromCurrentImageContext();
+    if(newImage == nil)
+        NSLog(@"could not scale image");
+
+    //pop the context to get back to the default
+    UIGraphicsEndImageContext();
+
+    return newImage;
+}
+//
 
 NSString * generateCacheFilePathForMarker(NSString * ext)
 {
@@ -140,6 +181,7 @@ UIImage * markeImageWithImage(UIImage *image, UIImage * waterImage, CGFloat X, C
     [waterImage drawInRect:position];
     UIImage * newImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
+
     return newImage;
 }
 
@@ -437,7 +479,7 @@ RCT_EXPORT_METHOD(markWithImage: (NSString *)path
         }
         [_bridge.imageLoader loadImageWithURLRequest:[RCTConvert NSURLRequest:markerPath] callback:^(NSError *markerError, UIImage *marker) {
             if (markerError || marker == nil) {
-                marker = [[UIImage alloc] initWithContentsOfFile:path];
+                marker = [[UIImage alloc] initWithContentsOfFile:markerPath];//path
                 if (marker == nil) {
                     NSLog(@"Can't retrieve the file from the path");
 
@@ -447,14 +489,20 @@ RCT_EXPORT_METHOD(markWithImage: (NSString *)path
             }
             // Do mark
             UIImage * scaledImage = markeImageWithImage(image, marker, X, Y, scale, markerScale);
+
             if (scaledImage == nil) {
                 NSLog(@"Can't mark the image");
                 reject(@"error",@"Can't mark the image.", error);
                 return;
             }
             NSLog(@" file from the path");
-
-            saveImageForMarker(fullPath, scaledImage, quality);
+            //
+            //图片"压"的处理。“压” 是指文件体积变小，但是像素数不变，长宽尺寸不变，那么质量可能下降。
+            UIImage * comparessedImage = imageCompression(scaledImage);
+            //图片“缩”处理
+            UIImage * scaledAndCroppedImage = imageByScalingAndCroppingForSize(image.size,comparessedImage);//comparessedImage
+            //
+            saveImageForMarker(fullPath, scaledAndCroppedImage, quality);
             resolve(fullPath);
         }];
     }];
